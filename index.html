@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<!--
+================================================================================
+  CINQUANTE ET UN - Tunisian Card Game
+================================================================================
+
+  HOW TO ADD YOUR OWN MUSIC PLAYLIST:
+  
+  1. PREPARE YOUR MUSIC FILES:
+     - Supported formats: .mp3, .ogg, .wav
+     - Recommended: .mp3 for best browser compatibility
+     - Name them clearly (song1.mp3, song2.mp3, etc.)
+  
+  2. PLACE YOUR MUSIC FILES:
+     - Put all music files in the same folder as this HTML file
+     OR
+     - Create a "music" subfolder and put them there
+  
+  3. ADD SONGS TO YOUR PLAYLIST:
+     - Search for: "YOUR PLAYLIST - ADD YOUR SONGS HERE"
+     - You'll find code that looks like this:
+     
+       const playlist=[
+         {name:'Track 1',file:'music.mp3'},
+       ];
+     
+     - Add more songs like this:
+     
+       const playlist=[
+         {name:'Track 1',file:'music.mp3'},
+         {name:'Chill Vibes',file:'song2.mp3'},
+         {name:'Epic Beat',file:'music/epic.mp3'},
+         {name:'Lofi Hip Hop',file:'lofi.mp3'},
+       ];
+  
+  4. MUSIC CONTROLS:
+     - ⏮ Previous song
+     - ⏸/▶ Play/Pause  
+     - ⏭ Next song
+     - Songs loop infinitely through the playlist
+     - "Now Playing" popup shows when song changes
+     - All controls in the hamburger menu (☰)
+  
+  5. ADJUST VOLUME (OPTIONAL):
+     - Search for: bgMusic.volume
+     - Change value (0.0 = silent, 1.0 = full volume)
+     - Default is 0.3 (30% volume)
+
+================================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Machki Waawed</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ==================== LOADING ==================== -->
+<div id="loading" class="screen active">
+  <div class="pixel-ground"></div>
+  <div class="pixel-char" id="pixelChar">🏃</div>
+  <div class="loading-content">
+    <!-- Tunisian Flag SVG (improved) -->
+    <svg class="logo-card" width="140" height="100" viewBox="0 0 140 100" xmlns="http://www.w3.org/2000/svg" style="image-rendering:auto;filter:drop-shadow(0 6px 12px rgba(0,0,0,0.6));">
+      <!-- Red background -->
+      <rect width="140" height="100" fill="#E70013" rx="3"/>
+      <!-- White circle in center -->
+      <circle cx="70" cy="50" r="25" fill="#FFFFFF"/>
+      <!-- Red crescent (moon shape) -->
+      <circle cx="73" cy="50" r="20" fill="#E70013"/>
+      <circle cx="68" cy="50" r="20" fill="#FFFFFF"/>
+      <!-- Red star (5-pointed) centered in the white circle/crescent -->
+      <g transform="translate(70, 50)">
+        <polygon points="0,-12 2.8,-3.6 11.5,-3.6 4.6,2.1 7.4,10.5 0,4.8 -7.4,10.5 -4.6,2.1 -11.5,-3.6 -2.8,-3.6" fill="#E70013"/>
+      </g>
+    </svg>
+    <div class="loading-title px-title">MACHKI<br>WAAWED</div>
+    <div class="load-bar-wrap">
+      <div class="load-bar-inner" id="loadBar"></div>
+    </div>
+    <div class="load-pct" id="loadPct">LOADING... 0%</div>
+  </div>
+</div>
+
+<!-- ==================== MENU ==================== -->
+<div id="menu" class="screen">
+
+  <!-- Profile chip top-left (shown when logged in) -->
+  <div id="profileChip" onclick="goTo('auth-profile')" title="View Profile">
+    <div class="chip-avatar-box" id="chipAvatarBox"></div>
+    <div class="chip-info-box">
+      <div class="chip-username" id="chipUsername">PLAYER</div>
+      <div class="chip-rank" id="chipRank">⭐ BEGINNER</div>
+    </div>
+  </div>
+
+  <!-- Friends button — appears right after profile chip -->
+  <button id="friendsBtn" onclick="openFriends()" title="Friends">
+    <svg width="22" height="22" viewBox="0 0 22 22" style="image-rendering:pixelated;" fill="#C9A84C">
+      <!-- Person 1 -->
+      <rect x="3" y="2" width="4" height="4"/>
+      <rect x="2" y="7" width="6" height="5"/>
+      <rect x="1" y="12" width="8" height="4"/>
+      <!-- Person 2 -->
+      <rect x="15" y="2" width="4" height="4"/>
+      <rect x="14" y="7" width="6" height="5"/>
+      <rect x="13" y="12" width="8" height="4"/>
+      <!-- Plus sign -->
+      <rect x="10" y="8" width="2" height="6"/>
+      <rect x="8" y="10" width="6" height="2"/>
+    </svg>
+    <div id="friendsBadge"></div>
+  </button>
+
+
+
+  <!-- Quick mute button top-right — pixel speaker shape -->
+  <button id="menuMuteBtn" onclick="menuToggleMute()" style="
+    position:absolute;top:clamp(10px,2vh,18px);right:clamp(10px,2vw,18px);
+    background:rgba(0,0,0,0.7);border:3px solid #C9A84C;
+    padding:8px 10px;cursor:pointer;z-index:10;
+    box-shadow:3px 3px 0 #000;
+    display:flex;align-items:center;justify-content:center;
+    width:clamp(36px,4vw,48px);height:clamp(36px,4vw,48px);
+  " title="Toggle Music">
+    <svg id="muteIcon" width="22" height="22" viewBox="0 0 14 14" style="image-rendering:pixelated;" fill="#C9A84C">
+      <!-- Speaker cone body -->
+      <rect x="0" y="4" width="2" height="6"/>
+      <rect x="2" y="3" width="1" height="8"/>
+      <rect x="3" y="2" width="1" height="10"/>
+      <rect x="4" y="4" width="1" height="6"/>
+      <!-- Sound waves (shown when on) -->
+      <g id="waveLines">
+        <rect x="6" y="5" width="1" height="4"/>
+        <rect x="8" y="3" width="1" height="8"/>
+        <rect x="10" y="1" width="1" height="12"/>
+      </g>
+      <!-- X mark (shown when muted, hidden by default) -->
+      <g id="muteX" style="display:none;">
+        <rect x="6" y="4" width="1" height="1"/>
+        <rect x="7" y="5" width="1" height="1"/>
+        <rect x="8" y="6" width="1" height="1"/>
+        <rect x="7" y="7" width="1" height="1"/>
+        <rect x="6" y="8" width="1" height="1"/>
+        <rect x="9" y="4" width="1" height="1"/>
+        <rect x="9" y="8" width="1" height="1"/>
+      </g>
+    </svg>
+  </button>
+
+  <!-- Main menu content -->
+  <div class="menu-content">
+    <div class="menu-logo-wrap">
+      <div class="menu-title-line1">✦ CARD GAME ✦</div>
+      <div class="menu-title-main">MACHKI WAAWED</div>
+      <div class="menu-title-ar" id="menuSubtitle">خمسة وخمسون</div>
+    </div>
+
+    <div class="menu-btns">
+      <button class="px-btn px-btn-green" id="btnPlay">
+        ▶ <span id="lblPlay">PLAY</span>
+      </button>
+      <button class="px-btn" id="btnHowToPlay" style="background:#AA6600;color:#fff;box-shadow:0 6px 0 #663300,4px 0 0 #663300,-4px 0 0 #663300,4px 6px 0 #331100,-4px 6px 0 #331100,inset 2px 2px 0 rgba(255,255,255,0.2);">
+        <span id="lblHowToPlay">HOW TO PLAY</span>
+      </button>
+      <button class="px-btn px-btn-mp" id="btnMultiplayer" style="background:#6600AA;color:#fff;box-shadow:0 6px 0 #3d0066,4px 0 0 #3d0066,-4px 0 0 #3d0066,4px 6px 0 #1a0033,-4px 6px 0 #1a0033,inset 2px 2px 0 rgba(255,255,255,0.2);">
+        🌐 <span id="lblMultiplayer">MULTIPLAYER</span>
+      </button>
+      <button class="px-btn" id="btnSettings" style="background:#3333AA;color:#fff;box-shadow:0 6px 0 #111166,4px 0 0 #111166,-4px 0 0 #111166,4px 6px 0 #080833,-4px 6px 0 #080833,inset 2px 2px 0 rgba(255,255,255,0.2);">
+        ⚙ <span id="lblSettings">SETTINGS</span>
+      </button>
+    </div>
+
+    <div class="menu-copy">© 2025 MACHKI WAAWED</div>
+  </div>
+</div>
+
+<!-- ==================== SETTINGS ==================== -->
+<div id="settings" class="screen">
+  <div class="settings-panel">
+    <div class="settings-title">⚙ SETTINGS</div>
+
+    <div class="setting-row">
+      <div class="setting-lbl" id="lblSound">🔊 SOUND FX</div>
+      <div class="px-toggle on" id="togSound" onclick="toggleSetting(this,'sound')"></div>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-lbl" id="lblMusic">🎵 MUSIC</div>
+      <div class="px-toggle on" id="togMusic" onclick="toggleSetting(this,'music')"></div>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-lbl" id="lblLanguage">🌐 LANGUAGE</div>
+      <div class="px-toggle" id="togLang" onclick="toggleSetting(this,'lang')" style="border-color:#C9A84C;background:rgba(201,168,76,0.2);">
+        <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(6px,0.7vw,9px);color:#FFD700;white-space:nowrap;font-family:'Press Start 2P',monospace;">AR</span>
+      </div>
+    </div>
+
+    <!-- AI PLAYER NAMES -->
+    <div style="border-top:2px solid rgba(201,168,76,0.25);padding-top:clamp(12px,2vh,18px);display:flex;flex-direction:column;gap:clamp(8px,1.4vh,14px);">
+      <div style="font-size:clamp(7px,0.9vw,10px);color:#C9A84C;letter-spacing:2px;text-align:center;">👥 AI PLAYER NAMES</div>
+
+      <div class="setting-row">
+        <div class="setting-lbl">PLAYER 1</div>
+        <input id="aiName1Input" class="ai-name-input" type="text" maxlength="10" placeholder="SAMI" spellcheck="false">
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">PLAYER 2</div>
+        <input id="aiName2Input" class="ai-name-input" type="text" maxlength="10" placeholder="LAYLA" spellcheck="false">
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">PLAYER 3</div>
+        <input id="aiName3Input" class="ai-name-input" type="text" maxlength="10" placeholder="KARIM" spellcheck="false">
+      </div>
+    </div>
+
+    <div class="settings-footer">
+      <button class="px-btn px-btn-red" id="btnSettingsBack" style="font-size:clamp(8px,1vw,11px);">✕ BACK</button>
+      <button class="px-btn px-btn-green" id="btnSettingsSave" style="font-size:clamp(8px,1vw,11px);">✓ SAVE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== GAME SELECTION ==================== -->
+<div id="gameselect" class="screen">
+  <div class="settings-panel" style="max-width:100%;width:100%;height:100%;max-height:100%;padding:clamp(20px,3vh,40px) clamp(24px,4vw,48px);">
+    <div class="settings-title">SELECT GAME</div>
+    
+    <div style="display:flex;flex-direction:column;gap:clamp(24px,4vh,40px);margin-top:clamp(30px,5vh,50px);">
+      
+      <!-- 51 Game Option -->
+      <button class="px-btn" onclick="selectGame('51')" style="
+        background:var(--gold);
+        color:var(--dark);
+        min-height:clamp(80px,12vh,120px);
+        padding:clamp(16px,2.5vh,24px);
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:8px;
+        box-shadow:
+          0 8px 0 #8B6914,
+          4px 0 0 #8B6914,
+          -4px 0 0 #8B6914,
+          4px 8px 0 #5a4010,
+          -4px 8px 0 #5a4010,
+          inset 2px 2px 0 rgba(255,255,255,0.4);
+      ">
+        <div style="font-size:clamp(16px,2.8vw,28px);letter-spacing:2px;">✦ CINQUANTE ET UN ✦</div>
+      </button>
+      
+      <!-- Chkobba Game Option -->
+      <button class="px-btn px-btn-green" onclick="selectGame('chkobba')" style="
+        min-height:clamp(80px,12vh,120px);
+        padding:clamp(16px,2.5vh,24px);
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:8px;
+      ">
+        <div style="font-size:clamp(16px,2.8vw,28px);letter-spacing:2px;">⭐ CHKOBBA ⭐</div>
+      </button>
+
+      <!-- Rami Game Option -->
+      <button class="px-btn" onclick="selectGame('rami')" style="
+        background:#6600CC;color:#fff;
+        box-shadow:0 8px 0 #3d0080,4px 0 0 #3d0080,-4px 0 0 #3d0080,4px 8px 0 #1a0040,-4px 8px 0 #1a0040,inset 2px 2px 0 rgba(255,255,255,0.2);
+        min-height:clamp(80px,12vh,120px);
+        padding:clamp(16px,2.5vh,24px);
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:8px;
+      ">
+        <div style="font-size:clamp(16px,2.8vw,28px);letter-spacing:2px;">♦ RAMI ♦</div>
+        <div style="font-size:clamp(7px,1vw,10px);color:#cc99ff;letter-spacing:1px;">108 CARDS — VS AI</div>
+      </button>
+      
+    </div>
+
+    <div class="settings-footer" style="margin-top:clamp(30px,5vh,50px);">
+      <button class="px-btn px-btn-red" onclick="sfxClick();goTo('menu')" style="font-size:clamp(10px,1.4vw,16px);width:100%;padding:clamp(12px,2vh,18px);">
+        ✕ BACK TO MENU
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== HOW TO PLAY - GAME SELECT ==================== -->
+<div id="howtoplayselect" class="screen" style="flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg,#1a0800 0%,#0d0d0d 100%);">
+  <div style="width:100%;max-width:520px;padding:clamp(32px,6vh,64px) clamp(24px,5vw,48px);display:flex;flex-direction:column;gap:clamp(16px,3vh,28px);">
+    <div style="font-family:'Press Start 2P',monospace;font-size:clamp(14px,2.2vw,22px);color:#FFD700;text-shadow:4px 4px 0 #8B6914;letter-spacing:3px;text-align:center;margin-bottom:8px;">SELECT GAME</div>
+    <button class="px-btn" onclick="showHowToPlay51()" style="
+      width:100%;padding:clamp(20px,4vh,36px);display:flex;flex-direction:column;
+      align-items:center;gap:10px;background:#FFD700;color:#1a0800;border:none;
+      box-shadow:0 8px 0 #8B6914,4px 0 0 #8B6914,-4px 0 0 #8B6914,4px 8px 0 #5a4010,-4px 8px 0 #5a4010;">
+      <div style="font-size:clamp(18px,3vw,32px);letter-spacing:2px;">CINQUANTE ET UN</div>
+      <div style="font-size:clamp(8px,1.1vw,11px);color:#8B6914;letter-spacing:1px;">51 CARD GAME</div>
+    </button>
+    <button class="px-btn px-btn-green" onclick="showHowToPlayChkobba()" style="
+      width:100%;padding:clamp(20px,4vh,36px);display:flex;flex-direction:column;
+      align-items:center;gap:10px;border:none;
+      box-shadow:0 8px 0 #145214,4px 0 0 #145214,-4px 0 0 #145214;">
+      <div style="font-size:clamp(18px,3vw,32px);letter-spacing:2px;">CHKOBBA</div>
+      <div style="font-size:clamp(8px,1.1vw,11px);color:#a0d8a0;letter-spacing:1px;">CAPTURE CARD GAME</div>
+    </button>
+    <button class="px-btn" onclick="showHowToPlayRami()" style="
+      width:100%;padding:clamp(20px,4vh,36px);display:flex;flex-direction:column;
+      align-items:center;gap:10px;background:#6600CC;color:#fff;border:none;
+      box-shadow:0 8px 0 #3d0080,4px 0 0 #3d0080,-4px 0 0 #3d0080,4px 8px 0 #1a0040,-4px 8px 0 #1a0040;">
+      <div style="font-size:clamp(18px,3vw,32px);letter-spacing:2px;">RAMI</div>
+      <div style="font-size:clamp(8px,1.1vw,11px);color:#cc99ff;letter-spacing:1px;">108 CARDS — MELD GAME</div>
+    </button>
+    <button class="px-btn px-btn-red" onclick="sfxClick();goTo('menu')" style="
+      width:100%;font-size:clamp(10px,1.4vw,14px);padding:clamp(14px,2.5vh,22px);">
+      BACK TO MENU
+    </button>
+  </div>
+</div>
+
+<!-- ==================== HOW TO PLAY ==================== -->
+<div id="howtoplay" class="screen" style="flex-direction:column;background:linear-gradient(180deg,#1a0800 0%,#0d0d0d 100%);">
+  <div style="width:100%;height:100%;display:flex;flex-direction:column;padding:clamp(16px,3vh,28px) clamp(20px,4vw,40px);gap:0;overflow:hidden;">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0;margin-bottom:clamp(12px,2vh,20px);">
+      <div style="font-family:'Press Start 2P',monospace;font-size:clamp(12px,1.8vw,18px);color:#FFD700;text-shadow:3px 3px 0 #8B6914;letter-spacing:2px;" id="howToPlayTitle">HOW TO PLAY</div>
+      <div style="display:flex;gap:8px;">
+        <button id="btnRules51" class="px-btn px-btn-green" onclick="showRules('51')" style="font-size:clamp(8px,1vw,11px);padding:8px 14px;">51</button>
+        <button id="btnRulesChkobba" class="px-btn" onclick="showRules('chkobba')" style="font-size:clamp(8px,1vw,11px);padding:8px 14px;background:#8B6914;color:#fff;box-shadow:0 4px 0 #5a4010,2px 0 0 #5a4010,-2px 0 0 #5a4010;">CHKOBBA</button>
+        <button id="btnRulesRami" class="px-btn" onclick="showRules('rami')" style="font-size:clamp(8px,1vw,11px);padding:8px 14px;background:#6600CC;color:#fff;box-shadow:0 4px 0 #3d0080,2px 0 0 #3d0080,-2px 0 0 #3d0080;">RAMI</button>
+      </div>
+    </div>
+
+    <div style="height:2px;background:linear-gradient(90deg,transparent,#8B6914,transparent);flex-shrink:0;margin-bottom:clamp(12px,2vh,20px);"></div>
+
+    <!-- Scrollable content -->
+    <div style="flex:1;overflow-y:auto;padding-right:8px;" id="howToPlayScroll">
+
+      <!-- 51 RULES -->
+      <div id="rules51" style="font-size:clamp(9px,1.1vw,12px);color:#FFFCE8;line-height:2.4;text-align:left;">
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">OBJECTIVE</div>
+          <div>Get as close to 51 points as possible without going over. If you reach 51 or more, you lose 1 point.</div>
+        </div>
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">CARD VALUES</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;">
+            <div>7, 8 — Face value (7 or 8 pts)</div>
+            <div>9 — 0 points</div>
+            <div>10 — +10 or -10 (you choose)</div>
+            <div>J — Reverses turn order</div>
+            <div>Q — 3 points</div>
+            <div>K — 4 points</div>
+            <div>A — 1 or 11 (you choose)</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">HOW TO PLAY</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div>1. Click a card to select it (it rises up)</div>
+            <div>2. Click again to deselect</div>
+            <div>3. Click THROW CARD to play it</div>
+            <div>4. For Ace or 10, choose value first</div>
+            <div>5. Turn passes to the next player</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">WINNING</div>
+          <div>Play multiple rounds. Highest score at the end wins. Avoid going over 51 to keep your points.</div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">TURN ORDER</div>
+          <div>Bottom (YOU) — Top — Right — Left (anti-clockwise)</div>
+        </div>
+
+      </div>
+
+      <!-- CHKOBBA RULES -->
+      <div id="rulesChkobba" style="font-size:clamp(9px,1.1vw,12px);color:#FFFCE8;line-height:2.4;text-align:left;display:none;">
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">OBJECTIVE</div>
+          <div>Capture cards from the table by matching or summing them to your card. Score the most points to win.</div>
+        </div>
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">THE DECK</div>
+          <div>40 cards — A 2 3 4 5 6 7 J Q K in 4 suits. No 8, 9, 10.</div>
+        </div>
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">HOW TO CAPTURE</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div>Play a card that MATCHES a table card (e.g. 7 captures 7)</div>
+            <div>OR play a card that SUMS with multiple table cards (e.g. 7 captures 3+4)</div>
+            <div>If both match and sum exist, you must take the MATCH</div>
+            <div>If no capture is possible, your card STAYS on the table</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">CHKOBBA</div>
+          <div>If you clear ALL cards from the table — that is a CHKOBBA! +1 bonus point each time.</div>
+        </div>
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">SCORING (per round)</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div>Most cards captured — +1 pt</div>
+            <div>Most diamonds captured — +1 pt</div>
+            <div>7 of diamonds — +1 pt</div>
+            <div>BERMILA (most 6s and 7s) — +1 pt</div>
+            <div>Each CHKOBBA — +1 pt</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RAMI RULES -->
+      <div id="rulesRami" style="font-size:clamp(9px,1.1vw,12px);color:#FFFCE8;line-height:2.4;text-align:left;display:none;">
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">GOAL</div>
+          <div>Be the first player to get rid of all your cards.</div>
+        </div>
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">ON YOUR TURN</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div>1. Draw 1 card from the pile or discard</div>
+            <div>2. Play cards if you can</div>
+            <div>3. Discard 1 card</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">VALID PLAYS</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div><span style="color:#44FF88;">Sequence:</span> 3 or more cards in order, same suit<br>Example: 5♥ 6♥ 7♥</div>
+            <div><span style="color:#44FF88;">Set:</span> 3 or 4 cards of the same number<br>Example: 9♠ 9♦ 9♣</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">OPENING (51)</div>
+          <div style="margin-bottom:10px;">Before you can play on the table, you must open with at least 51 points.</div>
+          <div style="color:#C9A84C;font-size:clamp(8px,1vw,11px);margin-top:8px;border-top:1px solid rgba(201,168,76,0.2);padding-top:8px;">CARD VALUES:</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;margin-top:6px;">
+            <div>2–10 = Face value</div>
+            <div>J, Q, K = 10</div>
+            <div>Ace = 1 or 11</div>
+            <div>Joker = value of card it replaces</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">AFTER OPENING</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div>You can:</div>
+            <div>• Add cards to your melds</div>
+            <div>• Add cards to other melds on the table</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">JOKER RULE</div>
+          <div>If a meld has a Joker and you have the real card, you can replace the Joker and take it into your hand.</div>
+        </div>
+
+        <div style="margin-bottom:clamp(20px,3vh,32px);">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">WINNING</div>
+          <div>The first player to empty all cards wins.</div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <div style="color:#FFD700;font-size:clamp(10px,1.4vw,15px);margin-bottom:10px;border-bottom:2px solid rgba(201,168,76,0.3);padding-bottom:6px;letter-spacing:2px;">SCORING</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div>• If you opened and lost → your score = cards left in hand</div>
+            <div>• If you didn't open → 100 points</div>
+            <div>• Joker = 20 points</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="flex-shrink:0;padding-top:clamp(12px,2vh,20px);border-top:2px solid rgba(201,168,76,0.2);">
+      <button class="px-btn px-btn-green" id="btnHowToPlayBack" style="font-size:clamp(10px,1.4vw,14px);width:100%;padding:clamp(12px,2vh,18px);">GOT IT — BACK</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== GAME SETUP ==================== -->
+<div id="gamesetup" class="screen">
+  <div class="settings-panel" style="max-width:100%;width:100%;height:100%;max-height:100%;padding:clamp(20px,3vh,40px) clamp(24px,4vw,48px);display:flex;flex-direction:column;overflow:hidden;">
+    <div class="settings-title" id="gameSetupTitle" style="flex-shrink:0;">GAME SETUP</div>
+    
+    <!-- Selected Game Badge -->
+    <div id="selectedGameBadge" style="
+      text-align:center;
+      margin:clamp(12px,2vh,20px) auto;
+      padding:clamp(8px,1.5vh,14px) clamp(12px,2vw,20px);
+      background:rgba(255,215,0,0.1);
+      border:3px solid rgba(255,215,0,0.3);
+      border-radius:8px;
+      max-width:300px;
+      flex-shrink:0;
+    ">
+      <div style="font-size:clamp(9px,1.3vw,13px);color:#C9A84C;letter-spacing:1px;">SELECTED GAME</div>
+      <div id="selectedGameName" style="font-size:clamp(11px,1.6vw,16px);color:#FFD700;margin-top:4px;letter-spacing:2px;">✦ MACHKI WAAWED</div>
+    </div>
+    
+    <!-- Scrollable content area -->
+    <div style="flex:1;overflow-y:auto;overflow-x:hidden;padding-right:8px;display:flex;flex-direction:column;gap:clamp(24px,4vh,36px);">
+      
+      <!-- MODE SELECTION (Chkobba only) -->
+      <div id="modeSelection" style="text-align:center;display:none;">
+        <div style="font-size:clamp(10px,1.4vw,16px);color:#FFD700;margin-bottom:12px;letter-spacing:2px;">MODE</div>
+        <div style="display:flex;gap:clamp(12px,2vw,20px);justify-content:center;flex-wrap:wrap;">
+          <button class="mode-btn sel" data-mode="1v1" onclick="selMode(this)">
+            <div style="font-size:clamp(14px,2vw,20px);margin-bottom:6px;">👤</div>
+            <div style="font-size:clamp(10px,1.4vw,14px);letter-spacing:1px;">1 vs 1</div>
+            <div style="font-size:clamp(7px,1vw,9px);color:#C9A84C;margin-top:4px;">Solo Play</div>
+          </button>
+          <button class="mode-btn" data-mode="2v2" onclick="selMode(this)">
+            <div style="font-size:clamp(14px,2vw,20px);margin-bottom:6px;">👥</div>
+            <div style="font-size:clamp(10px,1.4vw,14px);letter-spacing:1px;">2 vs 2</div>
+            <div style="font-size:clamp(7px,1vw,9px);color:#C9A84C;margin-top:4px;">Team Play</div>
+          </button>
+        </div>
+      </div>
+      
+      <!-- ROUNDS SELECTION -->
+      <div style="text-align:center;">
+        <div id="lblRounds" style="font-size:clamp(10px,1.4vw,16px);color:#FFD700;margin-bottom:12px;letter-spacing:2px;">ROUNDS</div>
+        <div class="rounds-row" style="justify-content:center;">
+          <button class="round-px-btn" data-v="3" onclick="selSetupRound(this)">3</button>
+          <button class="round-px-btn" data-v="5" onclick="selSetupRound(this)">5</button>
+          <button class="round-px-btn sel" data-v="7" onclick="selSetupRound(this)">7</button>
+        </div>
+      </div>
+
+      <!-- RAMI TARGET SCORE (shown only for Rami) -->
+      <div id="ramiTargetWrap" style="text-align:center;display:none;">
+        <div style="font-family:'Press Start 2P',monospace;font-size:clamp(10px,1.4vw,14px);color:#FFD700;margin-bottom:12px;letter-spacing:2px;">TARGET SCORE</div>
+        <button id="ramiTargetBtn" class="px-btn" onclick="sfxClick();ramiShowNumpad(window.ramiTargetScore||101,null)" style="font-size:clamp(10px,1.3vw,14px);background:#6600CC;color:#fff;box-shadow:0 5px 0 #3d0080,3px 0 0 #3d0080,-3px 0 0 #3d0080;min-width:200px;padding:12px 20px;">TARGET: 101</button>
+        <div style="font-family:'Press Start 2P',monospace;font-size:clamp(6px,0.75vw,8px);color:#888;margin-top:8px;">ANY NUMBER (e.g. 101, 201, 501, 1001...)</div>
+      </div>
+
+      <!-- RAMI OPENING THRESHOLD (shown only for Rami) -->
+      <div id="ramiOpeningWrap" style="text-align:center;display:none;">
+        <div style="font-family:'Press Start 2P',monospace;font-size:clamp(10px,1.4vw,14px);color:#FFD700;margin-bottom:12px;letter-spacing:2px;">OPENING MINIMUM</div>
+        <div style="display:flex;gap:clamp(8px,1.5vw,16px);justify-content:center;flex-wrap:wrap;">
+          <button class="rami-opening-btn sel" data-v="51" onclick="selRamiOpening(this)">
+            <div style="font-size:clamp(16px,2.2vw,24px);margin-bottom:6px;color:#FFD700;">51</div>
+            <div style="font-size:clamp(7px,0.9vw,9px);color:#C9A84C;letter-spacing:1px;">CLASSIC</div>
+          </button>
+          <button class="rami-opening-btn" data-v="61" onclick="selRamiOpening(this)">
+            <div style="font-size:clamp(16px,2.2vw,24px);margin-bottom:6px;color:#FFD700;">61</div>
+            <div style="font-size:clamp(7px,0.9vw,9px);color:#C9A84C;letter-spacing:1px;">MEDIUM</div>
+          </button>
+          <button class="rami-opening-btn" data-v="71" onclick="selRamiOpening(this)">
+            <div style="font-size:clamp(16px,2.2vw,24px);margin-bottom:6px;color:#FFD700;">71</div>
+            <div style="font-size:clamp(7px,0.9vw,9px);color:#C9A84C;letter-spacing:1px;">HARD</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- RAMI PLAYER COUNT (shown only for Rami) -->
+      <div id="ramiPlayersWrap" style="text-align:center;display:none;">
+        <div style="font-family:'Press Start 2P',monospace;font-size:clamp(10px,1.4vw,14px);color:#FFD700;margin-bottom:12px;letter-spacing:2px;">PLAYERS</div>
+        <div style="display:flex;gap:clamp(12px,2vw,20px);justify-content:center;flex-wrap:wrap;">
+          <button class="rami-players-btn sel" data-p="2" onclick="selRamiPlayers(this)">
+            <div style="font-size:clamp(14px,2vw,20px);margin-bottom:6px;">👤</div>
+            <div style="font-size:clamp(10px,1.4vw,14px);letter-spacing:1px;">2 PLAYERS</div>
+            <div style="font-size:clamp(7px,1vw,9px);color:#C9A84C;margin-top:4px;">You vs Sami</div>
+          </button>
+          <button class="rami-players-btn" data-p="4" onclick="selRamiPlayers(this)">
+            <div style="font-size:clamp(14px,2vw,20px);margin-bottom:6px;">👥</div>
+            <div style="font-size:clamp(10px,1.4vw,14px);letter-spacing:1px;">4 PLAYERS</div>
+            <div style="font-size:clamp(7px,1vw,9px);color:#C9A84C;margin-top:4px;">Café Table</div>
+          </button>
+        </div>
+        <!-- Team mode toggle — only visible when 4 players selected -->
+        <div id="ramiTeamWrap" style="display:none;margin-top:clamp(14px,2vh,20px);align-items:center;justify-content:center;gap:clamp(10px,1.5vw,16px);">
+          <div style="font-family:'Press Start 2P',monospace;font-size:clamp(8px,1vw,11px);color:#C9A84C;letter-spacing:1px;">CHACUN ET</div>
+          <div class="px-toggle" id="togRamiTeams" onclick="toggleRamiTeams(this)" style="border-color:#6600CC;background:rgba(102,0,204,0.2);">
+          </div>
+          <div style="font-family:'Press Start 2P',monospace;font-size:clamp(7px,0.85vw,9px);color:#888;">2v2 TEAMS</div>
+        </div>
+      </div>
+
+      <!-- RAMI WIN BONUS (shown only for Rami) -->
+      <div id="ramiWinBonusWrap" style="display:none;text-align:center;margin-top:clamp(14px,2vh,20px);">
+        <div style="display:flex;align-items:center;justify-content:center;gap:clamp(12px,2vw,18px);padding:clamp(10px,1.5vh,14px);background:rgba(102,0,204,0.1);border:2px solid rgba(102,0,204,0.3);border-radius:8px;">
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;">
+            <div style="font-family:'Press Start 2P',monospace;font-size:clamp(8px,1vw,11px);color:#FFD700;letter-spacing:1px;">♦ WIN BONUS</div>
+            <div style="font-family:'Press Start 2P',monospace;font-size:clamp(6px,0.7vw,8px);color:#888;letter-spacing:1px;" id="ramiWinModeDesc">WINNER GETS 0</div>
+          </div>
+          <div class="px-toggle" id="togRamiWinBonus" onclick="toggleRamiWinBonus(this)" style="border-color:#4CAF50;background:rgba(76,175,80,0.15);"></div>
+        </div>
+      </div>
+
+      <!-- DIFFICULTY SELECTION -->
+      <div style="text-align:center;">
+        <div id="lblDifficulty" style="font-size:clamp(10px,1.4vw,16px);color:#FFD700;margin-bottom:12px;letter-spacing:2px;">AI DIFFICULTY</div>
+        <div style="display:flex;gap:clamp(8px,1.5vw,16px);justify-content:center;flex-wrap:wrap;">
+          <button class="difficulty-btn" data-diff="easy" onclick="selDifficulty(this)">
+            <div class="diff-icon" style="width:20px;height:20px;background:#4CAF50;border-radius:50%;border:3px solid #2E7D32;"></div>
+            <div class="diff-name" id="lblEasy">EASY</div>
+            <div class="diff-desc">Beginner</div>
+          </button>
+          <button class="difficulty-btn sel" data-diff="medium" onclick="selDifficulty(this)">
+            <div class="diff-icon" style="width:20px;height:20px;background:#FFC107;border-radius:50%;border:3px solid #F57C00;"></div>
+            <div class="diff-name" id="lblMedium">MEDIUM</div>
+            <div class="diff-desc">Balanced</div>
+          </button>
+          <button class="difficulty-btn" data-diff="hard" onclick="selDifficulty(this)">
+            <div class="diff-icon" style="width:20px;height:20px;background:#F44336;border-radius:50%;border:3px solid #C62828;"></div>
+            <div class="diff-name" id="lblHard">HARD</div>
+            <div class="diff-desc">Expert</div>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- End scrollable content -->
+
+    <!-- Fixed footer at bottom -->
+    <div class="settings-footer" style="margin-top:clamp(16px,2.5vh,24px);display:flex;gap:12px;flex-wrap:wrap;justify-content:center;flex-shrink:0;padding-top:clamp(12px,2vh,20px);border-top:2px solid rgba(201,168,76,0.2);">
+      <button class="px-btn" onclick="sfxClick();goTo('gameselect')" style="font-size:clamp(9px,1.2vw,13px);background:#AA6600;color:#fff;box-shadow:0 6px 0 #663300,4px 0 0 #663300,-4px 0 0 #663300;">
+        ↺ CHANGE GAME
+      </button>
+      <button class="px-btn px-btn-red" onclick="sfxClick();goTo('menu')" style="font-size:clamp(9px,1.2vw,13px);">
+        ↩ MENU
+      </button>
+      <button class="px-btn px-btn-green" id="btnStartGame" style="font-size:clamp(11px,1.6vw,18px);padding:clamp(14px,2.5vh,22px) clamp(20px,3vw,36px);">
+        ▶ START GAME
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== GAME ==================== -->
+<div id="game" class="screen">
+  <div class="game-bg"></div>
+  <div class="felt"></div>
+  <div class="px-frame"></div>
+  <div class="px-frame-border"></div>
+
+  <div id="roundPill"><span id="hdrRoundLabel">ROUND</span> <span id="hdrRound">1/7</span></div>
+  <div id="openMinPill" style="display:none;"></div>
+  <div id="roundBanner" style="display:none;position:fixed;inset:0;z-index:300;
+    background:rgba(0,0,0,0.85);display:none;flex-direction:column;
+    align-items:center;justify-content:center;gap:12px;pointer-events:none;">
+    <div id="roundBannerNum" style="font-family:'Press Start 2P',monospace;
+      font-size:clamp(28px,6vw,56px);color:#FFD700;
+      text-shadow:4px 4px 0 #000,0 0 30px #FFD700;
+      animation:bannerPop 0.3s steps(4) forwards;">ROUND 1</div>
+    <div id="roundBannerSub" style="font-family:'Press Start 2P',monospace;
+      font-size:clamp(9px,1.5vw,14px);color:#C9A84C;letter-spacing:3px;">GET READY!</div>
+  </div>
+  <div id="hamburger" onclick="openDrawer()">
+    <div class="ham-line"></div>
+    <div class="ham-line"></div>
+    <div class="ham-line"></div>
+  </div>
+
+  <!-- CHAT BUTTON (MP only) -->
+  <div id="chatBtn" onclick="openChat()">
+    MSG
+    <div class="chat-unread" id="chatUnread"></div>
+  </div>
+
+  <!-- FLOATING CHAT TOASTS -->
+  <div id="chatToasts"></div>
+
+  <!-- NEW 4-PLAYER TABLE LAYOUT -->
+  <div id="gameContent">
+
+    <!-- TOP: KARIM (opposite you) -->
+    <div class="table-top">
+      <div class="opp-card" id="opp3Card">
+        <div class="opp-header">
+          <div class="opp-emoji" style="display:none;"></div>
+          <div class="opp-name-pts">
+            <div class="opp-name" id="opp3Name">KARIM</div>
+            <div class="opp-pts" id="opp3Pts">0 PTS</div>
+          </div>
+          <div class="turn-blink"></div>
+        </div>
+        <div class="opp-cards-visual" id="opp3Cards"></div>
+      </div>
+    </div>
+
+    <!-- MIDDLE ROW: SAMI (left) + CENTER + LAYLA (right) -->
+    <div class="table-middle">
+
+      <!-- LEFT: SAMI -->
+      <div class="opp-card opp-side" id="opp1Card">
+        <div class="opp-cards-visual opp-cards-vertical" id="opp1Cards"></div>
+        <div class="opp-header opp-header-vertical">
+          <div class="opp-emoji" style="display:none;"></div>
+          <div class="opp-name-pts">
+            <div class="opp-name" id="opp1Name">SAMI</div>
+            <div class="opp-pts" id="opp1Pts">0 PTS</div>
+          </div>
+          <div class="turn-blink"></div>
+        </div>
+      </div>
+
+      <!-- CENTER -->
+      <div class="center-zone">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:clamp(8px,1.5vh,12px);">
+          <!-- TOTAL ABOVE CARD -->
+          <div class="info-block">
+            <div class="ib-lbl" id="lblTotal">TOTAL</div>
+            <div class="ib-val" id="ibTotal">0</div>
+          </div>
+          
+          <!-- CARD SLOT -->
+          <div class="card-slot" id="cardSlot">
+            <span style="color:rgba(201,168,76,0.2);font-size:28px;">?</span>
+          </div>
+          <div class="msg-strip" id="msgStrip">PRESS PLAY TO START</div>
+          <div class="think-dots" id="thinkDots">
+            <div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>
+          </div>
+        </div>
+
+        <!-- Direction indicator removed per user request -->
+      </div>
+
+      <!-- RIGHT: LAYLA -->
+      <div class="opp-card opp-side" id="opp2Card">
+        <div class="opp-header opp-header-vertical">
+          <div class="opp-emoji" style="display:none;"></div>
+          <div class="opp-name-pts">
+            <div class="opp-name" id="opp2Name">LAYLA</div>
+            <div class="opp-pts" id="opp2Pts">0 PTS</div>
+          </div>
+          <div class="turn-blink"></div>
+        </div>
+        <div class="opp-cards-visual opp-cards-vertical" id="opp2Cards"></div>
+      </div>
+
+    </div>
+
+    <!-- BOTTOM: YOUR AREA -->
+    <div class="your-area">
+      <div class="your-info">
+        <div class="your-tag">
+          <div class="your-lbl">YOU / أنت</div>
+          <div class="your-pts" id="yourPts">0 PTS</div>
+        </div>
+        <div class="choice-wrap" id="choiceWrap">
+          <div class="choice-lbl" id="choiceLbl">CHOOSE VALUE</div>
+          <div class="choice-row" id="choiceRow"></div>
+        </div>
+      </div>
+      
+      <!-- CONFIRM BUTTON -->
+      <button class="px-btn px-btn-green" id="confirmBtn" style="display:none;font-size:clamp(9px,1.2vw,14px);padding:clamp(8px,1vh,12px) clamp(16px,2vw,24px);" onclick="confirmThrow()">
+        <span id="lblThrowCard">✓ THROW CARD</span>
+      </button>
+      
+      <div class="your-hand" id="yourHand"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== GAME OVER ==================== -->
+<div id="gameover" class="screen">
+  <div class="go-trophy" style="font-family:'Press Start 2P',monospace;font-size:clamp(28px,5vw,48px);color:#FFD700;text-shadow:3px 3px 0 #000;">★</div>
+  <div class="go-title" id="lblGameOver">GAME OVER</div>
+  <div class="go-winner" id="goWinner">PLAYER WINS!</div>
+  <div class="scores-panel">
+    <div class="scores-hdr" id="lblFinalScores">★ FINAL SCORES ★</div>
+    <div id="goScores"></div>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
+    <button class="px-btn" id="btnGoMenu" style="font-size:clamp(9px,1.2vw,13px);">↩ <span id="lblMainMenu">MAIN MENU</span></button>
+    <button class="px-btn px-btn-green" id="btnRematch" style="font-size:clamp(9px,1.2vw,13px);display:none;" onclick="mpVoteRematch()">↺ <span id="lblRematch">REMATCH</span></button>
+  </div>
+  <div id="rematchStatus" style="display:none;font-size:clamp(7px,0.9vw,9px);color:#C9A84C;margin-top:6px;font-family:'Press Start 2P',monospace;text-align:center;letter-spacing:1px;"></div>
+</div>
+
+<!-- OVERLAYS -->
+<div class="overlay ov-lose" id="ovLose">
+  <div class="ov-emoji">💀</div>
+  <div class="ov-msg px-title-red" id="ovLoseMsg">YOU LOST!</div>
+  <div style="font-size:clamp(7px,0.9vw,10px);color:#ccc;letter-spacing:2px;" id="ovLoseSub"></div>
+</div>
+<div class="overlay ov-win" id="ovWin">
+  <div class="ov-emoji">⭐</div>
+  <div class="ov-msg px-title" id="ovWinMsg">GOT 'EM!</div>
+  <div style="font-size:clamp(7px,0.9vw,10px);color:#ccc;letter-spacing:2px;">OPPONENT LOST THIS ROUND</div>
+</div>
+
+<!-- DISCONNECT OVERLAY -->
+<div id="ovDisconnect" style="display:none;position:fixed;inset:0;z-index:400;
+  background:rgba(20,0,0,0.96);flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;text-align:center;padding:24px;">
+  <div style="font-size:clamp(36px,7vw,64px);">📡</div>
+  <div id="ovDisconnectMsg" style="font-family:'Press Start 2P',monospace;
+    font-size:clamp(10px,1.8vw,18px);color:#FF4444;
+    text-shadow:3px 3px 0 #000;letter-spacing:1px;line-height:1.8;"></div>
+  <div style="font-family:'Press Start 2P',monospace;
+    font-size:clamp(7px,0.9vw,10px);color:#888;letter-spacing:2px;" id="ovDisconnectSub">
+    RETURNING TO MENU...
+  </div>
+</div>
+
+<!-- SLIDING DRAWER -->
+<div id="drawerBackdrop" onclick="closeDrawer()"></div>
+<div id="drawer">
+  <div class="drawer-hdr">
+    <div class="drawer-title">☰ MENU</div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section-lbl" id="lblDrawerGame">GAME</div>
+    <div class="drawer-row" id="drawerRoundRow">
+      <div class="drawer-lbl" id="lblDrawerRound">ROUND</div>
+      <div id="drawerRoundInfo" style="font-size:clamp(8px,1vw,12px);color:#FFD700;"></div>
+    </div>
+    <div class="drawer-row" id="drawerTotalRow">
+      <div class="drawer-lbl" id="lblDrawerTotal">TOTAL</div>
+      <div id="drawerTotalInfo" style="font-size:clamp(8px,1vw,12px);color:#FFD700;"></div>
+    </div>
+
+    <div class="drawer-section-lbl" style="margin-top:8px;" id="lblDrawerSettings">SETTINGS</div>
+    <div class="drawer-row">
+      <div class="drawer-lbl" id="lblDrawerSound">SOUND</div>
+      <div class="px-toggle on" id="dTogSound" onclick="toggleSetting(this,'sound')"></div>
+    </div>
+    <div class="drawer-row">
+      <div class="drawer-lbl" id="lblDrawerLanguage">LANGUAGE</div>
+      <div class="px-toggle" id="dTogLang" onclick="toggleSetting(this,'lang')" style="border-color:#C9A84C;">
+        <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:8px;color:#FFD700;font-family:'Press Start 2P',monospace;">AR</span>
+      </div>
+    </div>
+
+    <div class="drawer-section-lbl" style="margin-top:12px;">MUSIC</div>
+    <div class="drawer-row" style="flex-direction:column;align-items:stretch;gap:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="drawer-lbl" id="currentSongName">Track 1</div>
+        <div style="font-size:clamp(7px,0.9vw,10px);color:#C9A84C;" id="songTime">0:00 / 0:00</div>
+      </div>
+      <div style="display:flex;gap:6px;justify-content:center;">
+        <button class="music-ctrl-btn" onclick="prevSong()" title="Previous">⏮</button>
+        <button class="music-ctrl-btn" onclick="togglePlayPause()" id="playPauseBtn" title="Play/Pause">⏸</button>
+        <button class="music-ctrl-btn" onclick="nextSong()" title="Next">⏭</button>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="drawer-menu-btn dmb-menu" onclick="closeDrawer();if(window.MP && MP.active){mpLeave();}else{goTo('menu');}"><span id="lblDrawerMainMenu">↩ MAIN MENU</span></button>
+    <button class="drawer-menu-btn dmb-quit" onclick="closeDrawer();if(window.MP && MP.active){mpLeave();}else{goTo('menu');}"><span id="lblDrawerQuit">✕ QUIT GAME</span></button>
+  </div>
+</div>
+
+<!-- NOW PLAYING POPUP -->
+<div id="nowPlaying">
+  <div class="np-label">NOW PLAYING</div>
+  <div class="np-song" id="npSongName">Track 1</div>
+</div>
+
+<canvas id="confetti"></canvas>
+
+<!-- BACKGROUND MUSIC -->
+<audio id="bgMusic">
+  <!-- Playlist will be managed by JavaScript -->
+</audio>
+
+<script src="game.js"></script>
+
+<!-- ==================== AUTH - LOGIN ==================== -->
+<div id="auth-login" class="screen">
+  <div class="auth-panel">
+    <div class="auth-logo-row">
+      <svg width="28" height="28" viewBox="0 0 120 120"><rect width="120" height="120" fill="#E70013"/><circle cx="60" cy="60" r="30" fill="#fff"/><circle cx="63" cy="60" r="24" fill="#E70013"/><path d="M63 45L66 54L75 54L68 59L71 68L63 63L55 68L58 59L51 54L60 54Z" fill="#fff"/></svg>
+      <div class="auth-title">MACHKI WAAWED</div>
+    </div>
+    <div class="auth-sub">SIGN IN TO YOUR ACCOUNT</div>
+    <div class="auth-divider"></div>
+    <div class="auth-field">
+      <div class="auth-field-lbl">EMAIL</div>
+      <input class="auth-input" id="loginEmail" type="email" placeholder="you@email.com" autocomplete="email" spellcheck="false">
+    </div>
+    <div class="auth-field">
+      <div class="auth-field-lbl">PASSWORD</div>
+      <input class="auth-input" id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div class="auth-error" id="loginError"></div>
+    <button class="px-btn px-btn-green" id="loginBtn" onclick="authSignIn()" style="width:100%;font-size:clamp(8px,1.1vw,11px);">▶ SIGN IN</button>
+    <button class="px-btn" onclick="authGuest()" style="width:100%;font-size:clamp(7px,1vw,10px);background:#333;color:#FFFCE8;box-shadow:0 4px 0 #111,3px 0 0 #111,-3px 0 0 #111;">👤 PLAY AS GUEST</button>
+    <div class="auth-divider"></div>
+    <div class="auth-link" onclick="goTo('auth-signup')">NO ACCOUNT? <span>REGISTER ▶</span></div>
+    <div class="auth-link" onclick="authForgotPassword()" style="margin-top:-4px;">FORGOT PASSWORD? <span>RESET</span></div>
+  </div>
+</div>
+
+<!-- ==================== AUTH - SIGN UP ==================== -->
+<div id="auth-signup" class="screen">
+  <div class="auth-panel">
+    <div class="auth-title">CREATE ACCOUNT</div>
+    <div class="auth-sub">ONE-TIME SETUP — FREE</div>
+    <div class="auth-divider"></div>
+    <div class="auth-field">
+      <div class="auth-field-lbl">USERNAME (shown in game)</div>
+      <input class="auth-input" id="signupUsername" type="text" maxlength="14" placeholder="ENTER USERNAME..." spellcheck="false" autocomplete="off">
+    </div>
+    <div class="auth-field">
+      <div class="auth-field-lbl">EMAIL</div>
+      <input class="auth-input" id="signupEmail" type="email" placeholder="you@email.com" autocomplete="email" spellcheck="false">
+    </div>
+    <div class="auth-field">
+      <div class="auth-field-lbl">PASSWORD</div>
+      <input class="auth-input" id="signupPassword" type="password" placeholder="••••••••" autocomplete="new-password">
+    </div>
+    <div class="auth-field">
+      <div class="auth-field-lbl">CONFIRM PASSWORD</div>
+      <input class="auth-input" id="signupPassword2" type="password" placeholder="••••••••" autocomplete="new-password">
+    </div>
+    <div class="auth-error" id="signupError"></div>
+    <button class="px-btn px-btn-green" id="signupBtn" onclick="authSignUp()" style="width:100%;font-size:clamp(8px,1.1vw,11px);">✓ CREATE ACCOUNT</button>
+    <div class="auth-link" onclick="goTo('auth-login')">HAVE AN ACCOUNT? <span>SIGN IN ▶</span></div>
+  </div>
+</div>
+
+<!-- ==================== AUTH - PROFILE ==================== -->
+<div id="auth-profile" class="screen">
+  <div class="profile-panel">
+
+    <!-- Header row: title + ? button -->
+    <div style="width:100%;display:flex;justify-content:space-between;align-items:center;">
+      <div class="auth-title" style="font-size:clamp(10px,1.4vw,13px);">MY PROFILE</div>
+      <button onclick="showXpGuide()" style="
+        font-family:'Press Start 2P',monospace;font-size:clamp(8px,1vw,11px);
+        background:#1a0800;color:#C9A84C;border:2px solid #8B6914;
+        padding:4px 10px;cursor:pointer;box-shadow:2px 2px 0 #000;
+        letter-spacing:1px;" title="How to earn XP">? XP</button>
+    </div>
+    <div class="auth-divider"></div>
+
+    <!-- Avatar: click to toggle picker -->
+    <div class="profile-avatar-wrap" onclick="toggleAvatarPicker()">
+      <div class="profile-avatar-box" id="profileAvatarBox"></div>
+      <div class="avatar-edit-badge">✎</div>
+    </div>
+
+    <!-- Hidden file input for photo upload -->
+    <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="authUploadPhoto(event)">
+
+    <!-- Avatar picker — hidden by default, opened by clicking avatar -->
+    <div id="avatarPicker" style="display:none;width:100%;">
+      <div class="auth-sub" style="margin-bottom:8px;text-align:center;">CHOOSE AVATAR OR UPLOAD PHOTO</div>
+      <div class="avatar-grid" id="avatarGrid" style="grid-template-columns:repeat(5,1fr);gap:8px;"></div>
+    </div>
+
+    <!-- Username display -->
+    <div id="profileUsernameDisplay" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;">
+      <div class="profile-username" id="profileUsername" style="font-size:clamp(11px,1.6vw,15px);">PLAYER</div>
+      <button id="editUsernameBtn" onclick="toggleUsernameEdit()" style="
+        font-family:'Press Start 2P',monospace;font-size:7px;
+        background:#1a0800;color:#C9A84C;border:2px solid #444;
+        padding:4px 8px;cursor:pointer;">✎</button>
+    </div>
+
+    <!-- Username edit row — hidden by default -->
+    <div id="profileUsernameEdit" style="display:none;width:100%;gap:8px;align-items:center;">
+      <input id="usernameEditInput" class="auth-input" type="text" maxlength="14"
+        style="font-size:clamp(8px,1vw,10px);padding:6px 10px;flex:1;" spellcheck="false"
+        onkeydown="if(event.key==='Enter') saveUsername()">
+      <button style="font-family:'Press Start 2P',monospace;font-size:8px;
+        background:#228B22;color:#fff;border:none;padding:8px 12px;cursor:pointer;
+        box-shadow:0 3px 0 #145214;flex-shrink:0;" onclick="saveUsername()">✓</button>
+      <button style="font-family:'Press Start 2P',monospace;font-size:8px;
+        background:#CC0000;color:#fff;border:none;padding:8px 12px;cursor:pointer;
+        box-shadow:0 3px 0 #880000;flex-shrink:0;" onclick="toggleUsernameEdit()">✕</button>
+    </div>
+
+    <div class="profile-rank-badge" id="profileRankBadge">🃏 BEGINNER</div>
+
+    <!-- Rank progress bar -->
+    <div class="rank-progress-wrap" style="width:100%;">
+      <div class="rank-row">
+        <div class="rank-label" id="profileRankName">🃏 BEGINNER</div>
+        <div class="rank-level" id="profileRankLevel">LVL 1</div>
+      </div>
+      <div class="rank-bar-bg">
+        <div class="rank-bar-fill" id="profileRankFill" style="width:0%;"></div>
+      </div>
+      <div class="rank-xp-txt" id="profileXpTxt">0 / 100 XP TO NEXT RANK</div>
+    </div>
+
+    <!-- Rank list -->
+    <div style="width:100%;background:#0a0a1a;border:2px solid #222;padding:8px 12px;">
+      <div class="auth-sub" style="text-align:left;margin-bottom:6px;letter-spacing:2px;">ALL RANKS</div>
+      <div id="rankListEl" style="font-size:clamp(7px,0.9vw,9px);display:flex;flex-direction:column;gap:5px;"></div>
+    </div>
+
+    <div class="auth-divider"></div>
+    <button class="px-btn px-btn-red" onclick="authSignOut()" style="width:100%;font-size:clamp(7px,0.9vw,9px);">✕ SIGN OUT</button>
+    <button class="px-btn" onclick="goTo('menu')" style="width:100%;font-size:clamp(7px,0.9vw,9px);background:#333;color:#FFFCE8;box-shadow:0 4px 0 #111,3px 0 0 #111,-3px 0 0 #111;">↩ BACK TO MENU</button>
+  </div>
+
+  <!-- XP Guide Modal — lives inside profile screen -->
+  <div id="xpGuideModal" style="display:none;position:fixed;inset:0;z-index:600;
+    background:rgba(0,0,0,0.88);align-items:center;justify-content:center;">
+    <div style="background:#0d0d1a;border:4px solid #FFD700;box-shadow:6px 6px 0 #8B6914;
+      padding:clamp(20px,3vh,32px) clamp(20px,3vw,36px);width:clamp(260px,80vw,380px);
+      font-family:'Press Start 2P',monospace;display:flex;flex-direction:column;gap:14px;">
+      <div style="font-size:clamp(10px,1.4vw,13px);color:#FFD700;text-shadow:2px 2px 0 #8B6914;
+        letter-spacing:2px;text-align:center;">⭐ HOW TO EARN XP</div>
+      <div style="height:2px;background:linear-gradient(90deg,transparent,#8B6914,transparent);"></div>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:clamp(8px,1vw,10px);">
+        <div style="display:flex;justify-content:space-between;border-bottom:1px solid #222;padding-bottom:8px;">
+          <span style="color:#C9A84C;">WIN A GAME</span><span style="color:#FFD700;">+20 XP</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;border-bottom:1px solid #222;padding-bottom:8px;">
+          <span style="color:#C9A84C;">LOSE A GAME</span><span style="color:#666;">+5 XP</span>
+        </div>
+      </div>
+      <div style="font-size:clamp(6px,0.8vw,8px);color:#555;letter-spacing:2px;">RANKS</div>
+      <div style="font-size:clamp(7px,0.9vw,9px);color:#888;line-height:2.2;display:flex;flex-direction:column;gap:2px;">
+        <div>🃏 BEGINNER &nbsp;&nbsp;— 0 XP</div>
+        <div>🎯 PLAYER &nbsp;&nbsp;&nbsp;&nbsp;— 100 XP</div>
+        <div>⭐ CARD SHARK — 300 XP</div>
+        <div>🔥 HUSTLER &nbsp;&nbsp;&nbsp;— 600 XP</div>
+        <div>👑 LEGEND &nbsp;&nbsp;&nbsp;&nbsp;— 1000 XP</div>
+      </div>
+      <button onclick="closeXpGuide()" class="px-btn px-btn-green" style="font-size:clamp(8px,1vw,10px);width:100%;">✓ GOT IT</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== FRIENDS SCREEN ==================== -->
+<div id="friends-screen" class="screen">
+  <div class="friends-panel">
+
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+      <div class="auth-title" style="font-size:clamp(10px,1.4vw,13px);">👥 FRIENDS</div>
+      <button onclick="goTo('menu')" style="font-family:'Press Start 2P',monospace;font-size:7px;
+        background:#333;color:#888;border:2px solid #444;padding:5px 10px;cursor:pointer;">✕</button>
+    </div>
+    <div class="auth-divider"></div>
+
+    <!-- Tabs -->
+    <div class="friends-tabs">
+      <div class="ftab active" id="ftabFriends" onclick="switchFriendsTab('friends')">FRIENDS</div>
+      <div class="ftab" id="ftabRequests" onclick="switchFriendsTab('requests')">
+        REQUESTS <span id="requestCount" style="color:#FF4444;"></span>
+      </div>
+      <div class="ftab" id="ftabAdd" onclick="switchFriendsTab('add')">+ ADD</div>
+    </div>
+
+    <!-- FRIENDS LIST TAB -->
+    <div id="friendsTabFriends" style="display:flex;flex-direction:column;gap:6px;width:100%;">
+      <div id="friendsList" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+
+    <!-- REQUESTS TAB -->
+    <div id="friendsTabRequests" style="display:none;flex-direction:column;gap:6px;width:100%;">
+      <div style="font-size:clamp(6px,0.8vw,8px);color:#555;letter-spacing:2px;margin-bottom:4px;">INCOMING</div>
+      <div id="requestsList" style="display:flex;flex-direction:column;gap:6px;"></div>
+      <div style="font-size:clamp(6px,0.8vw,8px);color:#555;letter-spacing:2px;margin:8px 0 4px;">SENT</div>
+      <div id="sentList" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+
+    <!-- ADD FRIEND TAB -->
+    <div id="friendsTabAdd" style="display:none;flex-direction:column;gap:10px;width:100%;">
+      <div style="font-size:clamp(6px,0.8vw,9px);color:#C9A84C;letter-spacing:1px;line-height:2;">
+        SEARCH BY EXACT USERNAME
+      </div>
+      <div class="friends-search-row">
+        <input class="friends-search-input" id="friendSearchInput"
+          type="text" maxlength="14" placeholder="ENTER USERNAME..."
+          spellcheck="false"
+          onkeydown="if(event.key==='Enter') searchFriend()">
+        <button class="px-btn px-btn-green" onclick="searchFriend()"
+          style="font-size:clamp(7px,0.9vw,9px);padding:8px 12px;">SEARCH</button>
+      </div>
+      <div id="searchResult" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== MULTIPLAYER LOBBY ==================== -->
+<div id="multiplayer" class="screen">
+  <div class="mp-panel px-box">
+    <div class="mp-title px-title">MULTIPLAYER</div>
+
+    <!-- Nickname input -->
+    <div id="mpNickWrap">
+      <div class="mp-label">YOUR NICKNAME</div>
+      <input id="mpNickInput" class="mp-input" type="text" maxlength="12" placeholder="ENTER NAME..." spellcheck="false">
+      <div class="mp-btns-row">
+        <button class="px-btn px-btn-green" onclick="mpConfirmNick()">✓ CONFIRM</button>
+        <button class="px-btn px-btn-red" onclick="goTo('menu')">✕ BACK</button>
+      </div>
+    </div>
+
+    <!-- Host or Join choice -->
+    <div id="mpChoiceWrap" style="display:none;text-align:center;">
+      <div class="mp-nickname-display" id="mpNickDisplay"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:8px;width:100%;">
+        <button class="px-btn px-btn-green" style="width:100%;max-width:240px;" onclick="mpHost()">HOST GAME</button>
+        <button class="px-btn" style="width:100%;max-width:240px;background:#AA6600;color:#fff;box-shadow:0 6px 0 #663300,4px 0 0 #663300,-4px 0 0 #663300;" onclick="mpShowJoin()">JOIN GAME</button>
+        <button class="px-btn px-btn-red" style="width:100%;max-width:240px;" onclick="goTo('menu')">✕ BACK</button>
+      </div>
+    </div>
+
+    <!-- Join - enter code -->
+    <div id="mpJoinWrap" style="display:none;">
+      <div class="mp-label">ENTER ROOM CODE</div>
+      <input id="mpCodeInput" class="mp-input mp-code-input" type="text" maxlength="4" placeholder="0000" spellcheck="false">
+      <div class="mp-btns-row">
+        <button class="px-btn px-btn-green" onclick="mpJoin()">JOIN</button>
+        <button class="px-btn px-btn-red" onclick="mpShowChoice()">✕ BACK</button>
+      </div>
+      <div id="mpJoinError" style="color:#FF4444;font-size:9px;margin-top:8px;display:none;">ROOM NOT FOUND!</div>
+    </div>
+
+    <!-- Lobby (waiting room) -->
+    <div id="mpLobbyWrap" style="display:none;">
+      <div class="mp-room-code-wrap">
+        <div class="mp-label">ROOM CODE</div>
+        <div class="mp-room-code" id="mpRoomCode">----</div>
+        <div style="font-size:8px;color:#C9A84C;margin-top:4px;">SHARE THIS CODE</div>
+      </div>
+      <div class="mp-players-list" id="mpPlayersList"></div>
+      
+      <!-- Game selection - only host sees -->
+      <div id="mpGameWrap" style="display:none;text-align:center;margin:12px 0;width:100%;">
+        <div class="mp-label" style="margin-bottom:10px;align-self:center;width:100%;text-align:center;">SELECT GAME</div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          <button class="mp-sel-btn sel" data-game="51" onclick="mpSelGame(this)">
+            <div style="font-size:clamp(14px,2vw,18px);margin-bottom:4px;">✦</div>
+            <div style="font-size:clamp(8px,1.1vw,11px);letter-spacing:1px;">51</div>
+          </button>
+          <button class="mp-sel-btn" data-game="chkobba" onclick="mpSelGame(this)">
+            <div style="font-size:clamp(14px,2vw,18px);margin-bottom:4px;">⭐</div>
+            <div style="font-size:clamp(8px,1.1vw,11px);letter-spacing:1px;">CHKOBBA</div>
+          </button>
+          <button class="mp-sel-btn" data-game="rami" onclick="mpSelGame(this)">
+            <div style="font-size:clamp(14px,2vw,18px);margin-bottom:4px;">♦</div>
+            <div style="font-size:clamp(8px,1.1vw,11px);letter-spacing:1px;">RAMI</div>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Round picker for 51 - only host sees this -->
+      <div id="mpRoundsWrap" style="display:none;text-align:center;margin:8px 0;width:100%;">
+        <div class="mp-label" style="align-self:center;margin-bottom:10px;width:100%;text-align:center;">ROUNDS</div>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button class="mp-sel-btn mp-sel-sm" data-v="3" onclick="mpSelRounds(this)">3</button>
+          <button class="mp-sel-btn mp-sel-sm" data-v="5" onclick="mpSelRounds(this)">5</button>
+          <button class="mp-sel-btn mp-sel-sm sel" data-v="7" onclick="mpSelRounds(this)">7</button>
+        </div>
+      </div>
+      
+      <!-- Target score picker for Chkobba - only host sees this -->
+      <div id="mpTargetWrap" style="display:none;text-align:center;margin:8px 0;width:100%;">
+        <div class="mp-label" style="align-self:center;margin-bottom:10px;width:100%;text-align:center;">TARGET SCORE</div>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button class="mp-sel-btn mp-sel-sm" data-v="11" onclick="mpSelTarget(this)">11</button>
+          <button class="mp-sel-btn mp-sel-sm" data-v="21" onclick="mpSelTarget(this)">21</button>
+          <button class="mp-sel-btn mp-sel-sm sel" data-v="31" onclick="mpSelTarget(this)">31</button>
+        </div>
+      </div>
+      <!-- Rami target score picker - only host sees this -->
+      <div id="mpRamiTargetWrap" style="display:none;text-align:center;margin:8px 0;width:100%;">
+        <div class="mp-label" style="align-self:center;margin-bottom:10px;width:100%;text-align:center;">RAMI TARGET</div>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button class="mp-sel-btn mp-sel-sm" data-v="51" onclick="mpSelRamiTarget(this)">51</button>
+          <button class="mp-sel-btn mp-sel-sm sel" data-v="101" onclick="mpSelRamiTarget(this)">101</button>
+          <button class="mp-sel-btn mp-sel-sm" data-v="201" onclick="mpSelRamiTarget(this)">201</button>
+        </div>
+      </div>
+      <div id="mpStartWrap" style="display:none;">
+        <button class="px-btn px-btn-green" id="mpStartBtn" onclick="mpStartGame()">▶ START GAME</button>
+      </div>
+      
+      <!-- Guest sees selected settings (host does not) -->
+      <div id="mpGuestSettings" style="display:none;text-align:center;margin:16px 0;padding:12px;background:rgba(201,168,76,0.1);border:2px solid rgba(201,168,76,0.3);border-radius:8px;">
+        <div class="mp-label" style="margin-bottom:8px;color:#FFD700;">HOST'S GAME SETTINGS</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:clamp(9px,1.2vw,12px);color:#C9A84C;">
+          <div><span style="color:#FFD700;">GAME:</span> <span id="mpGuestGame">51</span></div>
+          <div id="mpGuestRoundsDisplay"><span style="color:#FFD700;">ROUNDS:</span> <span id="mpGuestRounds">7</span></div>
+          <div id="mpGuestTargetDisplay" style="display:none;"><span style="color:#FFD700;">TARGET:</span> <span id="mpGuestTarget">31</span></div>
+          <div id="mpGuestRamiTargetDisplay" style="display:none;"><span style="color:#FFD700;">RAMI TARGET:</span> <span id="mpGuestRamiTarget">101</span></div>
+        </div>
+      </div>
+      
+      <!-- INVITE FRIENDS — sliding tab -->
+      <div id="mpInviteTab" style="width:100%;position:relative;margin-top:6px;">
+        <!-- Tab toggle button -->
+        <button id="mpInviteTabBtn" onclick="mpToggleInviteTab()"
+          style="width:100%;font-family:'Press Start 2P',monospace;font-size:clamp(7px,0.9vw,9px);
+            background:#0a0a2a;color:#8888FF;border:2px solid #2a2a6a;
+            padding:8px 12px;cursor:pointer;letter-spacing:1px;
+            display:flex;align-items:center;justify-content:space-between;
+            box-shadow:0 3px 0 #05050f;">
+          <span>🎮 INVITE FRIENDS</span>
+          <span id="mpInviteTabArrow" style="transition:transform 0.25s;">▼</span>
+        </button>
+        <!-- Sliding content -->
+        <div id="mpInviteDrawer" style="
+          overflow:hidden;max-height:0;
+          transition:max-height 0.3s cubic-bezier(0.22,1,0.36,1);
+          border-left:2px solid #2a2a6a;border-right:2px solid #2a2a6a;border-bottom:2px solid #2a2a6a;
+          background:#07071a;">
+          <div id="mpInviteList" style="display:flex;flex-direction:column;gap:5px;padding:8px;max-height:160px;overflow-y:auto;"></div>
+        </div>
+      </div>
+
+      <div id="mpWaitMsg" style="font-size:9px;color:#C9A84C;margin-top:8px;">WAITING FOR HOST TO START...</div>
+      <button class="px-btn px-btn-red" style="margin-top:12px;font-size:9px;" onclick="mpConfirmLeave()">✕ LEAVE ROOM</button>
+    </div>
+
+    <div id="mpStatus" style="font-size:9px;color:#888;margin-top:8px;min-height:16px;"></div>
+  </div>
+</div>
+
+<!-- Turn timer bar -->
+<!-- ==================== CHAT OVERLAY ==================== -->
+<div id="chatOverlay">
+  <div style="font-family:'Press Start 2P',monospace;font-size:clamp(10px,1.5vw,14px);color:#FFD700;letter-spacing:2px;text-shadow:2px 2px 0 #000;">
+    ◆ CHAT
+  </div>
+  <div id="chatMessages"></div>
+  <div id="chatInputRow">
+    <input id="chatInput" type="text" maxlength="80" placeholder="TYPE A MESSAGE..." spellcheck="false"
+      onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="px-btn px-btn-green" id="chatSendBtn" onclick="sendChat()" style="font-size:clamp(8px,1vw,11px);">SEND</button>
+  </div>
+  <button class="px-btn px-btn-red" id="chatCloseBtn" onclick="closeChat()">✕ CLOSE</button>
+</div>
+
+<div id="timerBar" style="display:none;position:fixed;left:0;width:100%;height:6px;background:#333;z-index:500;">
+  <div id="timerFill" style="height:100%;background:#FFD700;width:100%;transition:width 1s linear;"></div>
+</div>
+
+<!-- ==================== FRIEND DM SLIDE-UP PANEL ==================== -->
+<div id="dmBackdrop" onclick="closeDmPanel()"></div>
+<div id="dmPanel">
+  <div class="dm-handle"></div>
+  <div class="dm-header">
+    <div class="dm-header-avatar" id="dmHeaderAvatar">🃏</div>
+    <div class="dm-header-info">
+      <div class="dm-header-name" id="dmHeaderName">PLAYER</div>
+      <div class="dm-header-status" id="dmHeaderStatus">● OFFLINE</div>
+    </div>
+    <button class="dm-close-btn" onclick="closeDmPanel()">✕</button>
+  </div>
+  <!-- Messages OR offline placeholder shown here -->
+  <div id="dmBody" style="flex:1;display:flex;flex-direction:column;overflow:hidden;"></div>
+  <!-- Input row -->
+  <div class="dm-input-row" id="dmInputRow">
+    <input class="dm-input" id="dmInput" type="text" maxlength="120"
+      placeholder="TYPE A MESSAGE..."
+      spellcheck="false"
+      onkeydown="if(event.key==='Enter')sendDm()">
+    <button class="dm-send-btn" id="dmSendBtn" onclick="sendDm()">SEND</button>
+  </div>
+</div>
+
+<!-- ==================== RAMI PIXEL NUMPAD ==================== -->
+<div id="ramiNumpad" style="display:none;position:fixed;inset:0;z-index:9000;align-items:center;justify-content:center;background:rgba(0,0,0,0.88);">
+  <div style="background:#0a0a1a;border:4px solid #FFD700;box-shadow:6px 6px 0 #8B6914;padding:clamp(16px,3vh,28px);display:flex;flex-direction:column;align-items:center;gap:12px;min-width:300px;max-width:90vw;">
+    <div style="font-family:'Press Start 2P',monospace;font-size:clamp(10px,1.4vw,14px);color:#FFD700;letter-spacing:2px;">SET TARGET SCORE</div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:clamp(7px,0.9vw,10px);color:#888;text-align:center;line-height:1.8;">101 · 201 · 301 · 501 · 1001...</div>
+    <div id="ramiNumpadDisplay" style="font-family:'Press Start 2P',monospace;font-size:clamp(22px,3.5vw,38px);color:#FFD700;background:#050510;border:3px solid #444;padding:10px 24px;min-width:180px;text-align:center;letter-spacing:4px;">101</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;">
+      <button onclick="ramiNumpadPress('7')" class="rami-np-btn">7</button>
+      <button onclick="ramiNumpadPress('8')" class="rami-np-btn">8</button>
+      <button onclick="ramiNumpadPress('9')" class="rami-np-btn">9</button>
+      <button onclick="ramiNumpadPress('4')" class="rami-np-btn">4</button>
+      <button onclick="ramiNumpadPress('5')" class="rami-np-btn">5</button>
+      <button onclick="ramiNumpadPress('6')" class="rami-np-btn">6</button>
+      <button onclick="ramiNumpadPress('1')" class="rami-np-btn">1</button>
+      <button onclick="ramiNumpadPress('2')" class="rami-np-btn">2</button>
+      <button onclick="ramiNumpadPress('3')" class="rami-np-btn">3</button>
+      <button onclick="ramiNumpadPress('clear')" class="rami-np-btn" style="background:#330000;color:#FF4444;border-color:#660000;">CLR</button>
+      <button onclick="ramiNumpadPress('0')" class="rami-np-btn">0</button>
+      <button onclick="ramiNumpadPress('back')" class="rami-np-btn" style="background:#1a1a00;color:#FFFF00;border-color:#555500;">DEL</button>
+    </div>
+    <div style="display:flex;gap:12px;width:100%;margin-top:4px;">
+      <button onclick="ramiNumpadCancel()" class="px-btn px-btn-red" style="flex:1;font-size:clamp(9px,1.1vw,12px);">CANCEL</button>
+      <button onclick="ramiNumpadConfirm()" class="px-btn px-btn-green" style="flex:1;font-size:clamp(9px,1.1vw,12px);">✓ OK</button>
+    </div>
+  </div>
+</div>
+<!-- ==================== LEAVE ROOM CONFIRM ==================== -->
+<div id="leaveRoomConfirm" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;">
+  <div style="background:#0a0a1a;border:4px solid #FF4444;box-shadow:8px 8px 0 #000,-8px 0 0 #000,8px 0 0 #000,0 -8px 0 #000;padding:clamp(24px,4vh,36px) clamp(28px,5vw,48px);display:flex;flex-direction:column;align-items:center;gap:clamp(16px,2.5vh,24px);max-width:90vw;">
+    <div style="font-family:'Press Start 2P',monospace;font-size:clamp(13px,1.8vw,18px);color:#FF4444;letter-spacing:2px;text-align:center;">LEAVE ROOM?</div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:clamp(8px,1vw,11px);color:#C9A84C;text-align:center;line-height:2;">
+      YOU WILL BE DISCONNECTED<br>FROM THE CURRENT ROOM.
+    </div>
+    <div style="display:flex;gap:clamp(12px,2vw,20px);">
+      <button class="px-btn px-btn-red" style="font-size:clamp(9px,1.1vw,12px);" onclick="mpLeave()">✕ LEAVE</button>
+      <button class="px-btn px-btn-green" style="font-size:clamp(9px,1.1vw,12px);" onclick="document.getElementById('leaveRoomConfirm').style.display='none'">STAY</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
